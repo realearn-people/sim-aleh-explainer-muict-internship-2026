@@ -13,12 +13,12 @@ import sim.explainer.library.exception.JSimPiException;
 import sim.explainer.library.framework.OWLServiceContext;
 import sim.explainer.library.util.OWLOntologyUtil;
 
-@Component("superRoleUnfolderManchesterSyntax")
-public class SuperRoleUnfolderManchesterSyntax implements IRoleUnfolder {
+@Component("subRoleUnfolderManchesterSyntax")
+public class SubRoleUnfolderManchesterSyntax implements ISubRoleUnfolder {
 
-    private OWLServiceContext owlServiceContext;
+    private final OWLServiceContext owlServiceContext;
 
-    public SuperRoleUnfolderManchesterSyntax(OWLServiceContext owlServiceContext) {
+    public SubRoleUnfolderManchesterSyntax(OWLServiceContext owlServiceContext) {
         this.owlServiceContext = owlServiceContext;
     }
 
@@ -27,22 +27,19 @@ public class SuperRoleUnfolderManchesterSyntax implements IRoleUnfolder {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private Set<String> unfold(OWLObjectProperty owlObjectProperty, Set<String> roles) {
-        Set<OWLObjectPropertyExpression> owlObjectPropertyExpressions = owlObjectProperty.getSuperProperties(owlServiceContext.getOwlOntology());
+        Set<OWLObjectPropertyExpression> owlObjectPropertyExpressions =
+                owlObjectProperty.getSubProperties(owlServiceContext.getOwlOntology());
 
-        // When a role has no defined hierarchy.
         if (owlObjectPropertyExpressions.isEmpty()) {
             roles.add(owlObjectProperty.getIRI().getFragment());
         }
 
         else {
-            // TODO - remove fresh name
-//            roles.add(ParserUtils.generateFreshName(owlObjectProperty.getIRI().getFragment()));
             roles.add(owlObjectProperty.getIRI().getFragment());
 
             for (OWLObjectPropertyExpression propertyExpression : owlObjectPropertyExpressions) {
-                OWLObjectProperty superObjectProperty = propertyExpression.asOWLObjectProperty();
-
-                unfold(superObjectProperty, roles);
+                OWLObjectProperty subObjectProperty = propertyExpression.asOWLObjectProperty();
+                unfold(subObjectProperty, roles);
             }
         }
 
@@ -54,12 +51,13 @@ public class SuperRoleUnfolderManchesterSyntax implements IRoleUnfolder {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public Set<String> unfoldRoleHierarchy(String roleName) {
+    public Set<String> unfoldSubRoleHierarchy(String roleName) {
         if (roleName == null) {
-            throw new JSimPiException("Unable to unfold role hierarchy as roleName is null.", ErrorCode.SuperRoleUnfolderManchesterSyntax_IllegalArguments);
+            throw new JSimPiException("Unable to unfold sub role hierarchy as roleName is null.",
+                    ErrorCode.SuperRoleUnfolderManchesterSyntax_IllegalArguments);
         }
 
-        Set<String> roles = new HashSet<String>();
+        Set<String> roles = new HashSet<>();
         if (roleName.equals(OWLConstant.TOP_ROLE.getOwlSyntax())) {
             return roles;
         }
@@ -68,7 +66,11 @@ public class SuperRoleUnfolderManchesterSyntax implements IRoleUnfolder {
             return roles;
         }
 
-        OWLObjectProperty owlObjectProperty = OWLOntologyUtil.getOWLObjectProperty(owlServiceContext.getOwlDataFactory(), owlServiceContext.getOwlOntologyManager(), owlServiceContext.getOwlOntology(), roleName);
+        OWLObjectProperty owlObjectProperty = OWLOntologyUtil.getOWLObjectProperty(
+                owlServiceContext.getOwlDataFactory(),
+                owlServiceContext.getOwlOntologyManager(),
+                owlServiceContext.getOwlOntology(),
+                roleName);
 
         return unfold(owlObjectProperty, roles);
     }

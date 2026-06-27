@@ -1,18 +1,19 @@
 package sim.explainer.library.util.syntaxanalyzer.krss;
 
-import sim.explainer.library.exception.ErrorCode;
-import sim.explainer.library.exception.JSimPiException;
-import sim.explainer.library.util.syntaxanalyzer.ParserHandler;
-import sim.explainer.library.util.MyStringUtils;
-import sim.explainer.library.util.ParserUtils;
-import sim.explainer.library.util.syntaxanalyzer.ChainOfResponsibilityHandler;
-import sim.explainer.library.util.syntaxanalyzer.HandlerContextImpl;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import sim.explainer.library.exception.ErrorCode;
+import sim.explainer.library.exception.JSimPiException;
+import sim.explainer.library.util.MyStringUtils;
+import sim.explainer.library.util.ParserUtils;
+import sim.explainer.library.util.syntaxanalyzer.ChainOfResponsibilityHandler;
+import sim.explainer.library.util.syntaxanalyzer.HandlerContextImpl;
+import sim.explainer.library.util.syntaxanalyzer.ParserHandler;
 
 public class KRSSTopLevelParserHandler extends ParserHandler {
 
@@ -20,6 +21,7 @@ public class KRSSTopLevelParserHandler extends ParserHandler {
 
     private static final String PARENTHESIS_AND = ParserUtils.OPEN_PARENTHESIS_STR + AND_SYMBOL + StringUtils.SPACE;
     private static final String PARENTHESIS_SOME = ParserUtils.OPEN_PARENTHESIS_STR + EXISTENTIAL_RESTRICTION_SYMBOL + StringUtils.SPACE;
+    private static final String PARENTHESIS_ALL = ParserUtils.OPEN_PARENTHESIS_STR + ALL_RESTRICTION_SYMBOL + StringUtils.SPACE; 
 
     protected static final String PATTERN_NAME = "[a-zA-Z]+[0-9_']*|[0-9_']+";
 
@@ -40,6 +42,7 @@ public class KRSSTopLevelParserHandler extends ParserHandler {
 
         int firstAndPosition = compactFormat.indexOf(PARENTHESIS_AND);
         int firstSomePosition = compactFormat.indexOf(PARENTHESIS_SOME);
+        int firstAllPosition = compactFormat.indexOf(PARENTHESIS_ALL); 
 
 
         if (logger.isDebugEnabled()) {
@@ -68,6 +71,13 @@ public class KRSSTopLevelParserHandler extends ParserHandler {
 
             return StringUtils.strip(StringUtils.replaceOnce(compactFormat, str, roleForm));
         }
+        else if ((firstAllPosition != -1 && firstAllPosition < firstAndPosition) || (firstAndPosition == -1 && firstAllPosition > -1)) {
+            String str = StringUtils.substring(compactFormat, firstAllPosition, lastParenthesis + 1);
+            String strWithOutParenthesises = MyStringUtils.removeCharactersFrom(str, 0, str.length() - 2);
+            String role = storeRoleAndNestedUniversalConceptPair(context, strWithOutParenthesises);
+            String roleForm = ParserUtils.convertToRoleForm(role);
+            return StringUtils.strip(StringUtils.replaceOnce(compactFormat, str, roleForm));
+        } 
 
         return null;
     }
@@ -105,6 +115,31 @@ public class KRSSTopLevelParserHandler extends ParserHandler {
 
         else {
 
+            throw new JSimPiException("Unable to match pattern[" + pattern.toString() + "].", ErrorCode.KrssTopLevelParserHandler_InvalidSyntaxException);
+        }
+
+        return role;
+    }
+
+    protected String storeRoleAndNestedUniversalConceptPair(HandlerContextImpl context, String str) {
+        if (context == null || str == null) {
+            throw new JSimPiException("Unable to store role and nested universal concept pair as context[" + context + "] and str[" + str + "] are null.", ErrorCode.KrssTopLevelParserHandler_IllegalArguments);
+        }
+
+        String role = null;
+        Pattern pattern = Pattern.compile("^all (" + PATTERN_NAME + ") ");
+        Matcher matcher = pattern.matcher(str);
+
+        if (matcher.find()) {
+            role = matcher.group(1);
+            StringBuilder builder = new StringBuilder(ALL_RESTRICTION_SYMBOL);
+            builder.append(StringUtils.SPACE);
+            builder.append(role);
+            builder.append(StringUtils.SPACE);
+            String nestedConcept = StringUtils.trim(StringUtils.replaceOnce(str, builder.toString(), StringUtils.EMPTY));
+            context.addToEdgePrimitiveConceptUniversalMap(role, nestedConcept);
+        }
+        else {
             throw new JSimPiException("Unable to match pattern[" + pattern.toString() + "].", ErrorCode.KrssTopLevelParserHandler_InvalidSyntaxException);
         }
 

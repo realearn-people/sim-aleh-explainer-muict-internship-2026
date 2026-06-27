@@ -1,16 +1,17 @@
 package sim.explainer.library.framework.explainer;
 
-import sim.explainer.library.util.utilstructure.SymmetricPair;
-
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import sim.explainer.library.util.utilstructure.SymmetricPair;
+
 public class SimRecord {
     private BigDecimal deg = new BigDecimal(0.0); // homomorphism degree
     private HashSet<SymmetricPair<String>> pri = new HashSet<>(); // a set of primitives between 2 comparing concepts that derives deg.
     private HashSet<SymmetricPair<String>> exi = new HashSet<>(); // a set of existentials between 2 comparing existentials that derives deg.
+    private HashSet<SymmetricPair<String>> uni = new HashSet<>(); //  a set of universals between 2 comparing universals that derives deg.
     private HashMap<SymmetricPair<String>, Set<SymmetricPair<String>>> emb = new HashMap<>(); // a set of embeddings in embedding space that derives deg.
 
     public SimRecord() {
@@ -26,6 +27,10 @@ public class SimRecord {
 
     public HashSet<SymmetricPair<String>> getExi() {
         return exi;
+    }
+
+    public HashSet<SymmetricPair<String>> getUni() {
+        return uni;
     }
 
     public HashMap<SymmetricPair<String>, Set<SymmetricPair<String>>> getEmb() {
@@ -44,6 +49,11 @@ public class SimRecord {
     public void appendExi(String exi1, String exi2) {
         SymmetricPair<String> pair = new SymmetricPair<>(exi1, exi2);
         this.exi.add(pair);
+    }
+
+    public void appendUni(String uni1, String uni2) {
+        SymmetricPair<String> pair = new SymmetricPair<>(uni1, uni2);
+        this.uni.add(pair);
     }
 
     public void appendEmb(String name1, String name2, String value1, String value2) {
@@ -69,7 +79,7 @@ public class SimRecord {
 
     @Override
     public String toString() {
-        return String.format("SimRecord{deg=%s, pri=%s, exi=%s, emb=%s}",
-                deg, pri, exi, emb);
+        return String.format("SimRecord{deg=%s, pri=%s, exi=%s, uni=%s, emb=%s}",
+                deg, pri, exi, uni, emb);
     }
 }

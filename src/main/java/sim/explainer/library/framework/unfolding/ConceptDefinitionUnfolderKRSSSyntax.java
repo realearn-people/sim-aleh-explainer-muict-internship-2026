@@ -1,17 +1,18 @@
 package sim.explainer.library.framework.unfolding;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
 import sim.explainer.library.enumeration.KRSSConstant;
 import sim.explainer.library.exception.ErrorCode;
 import sim.explainer.library.exception.JSimPiException;
 import sim.explainer.library.framework.KRSSServiceContext;
 import sim.explainer.library.util.ParserUtils;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Component("conceptDefinitionUnfolderKRSSSyntax")
 public class ConceptDefinitionUnfolderKRSSSyntax implements IConceptUnfolder {
@@ -20,6 +21,8 @@ public class ConceptDefinitionUnfolderKRSSSyntax implements IConceptUnfolder {
 
     private static final int LENGTH_AND = 3;
     private static final int LENGTH_SOME = 4;
+    private static final int LENGTH_ALL = 3; 
+    private static final int LENGTH_NOT = 3; 
 
     private KRSSServiceContext krssServiceContext;
 
@@ -49,6 +52,7 @@ public class ConceptDefinitionUnfolderKRSSSyntax implements IConceptUnfolder {
         int lastIndex = conceptName.length();
 
         boolean isPreviousReadingSome = false;
+        boolean isPreviousReadingAll = false;  
         while (beginIndex < lastIndex) {
 
             if (conceptName.charAt(beginIndex) == ParserUtils.OPEN_PARENTHESIS_CHAR || conceptName.charAt(beginIndex) == ParserUtils.CLOSE_PARENTHESIS_CHAR) {
@@ -93,12 +97,25 @@ public class ConceptDefinitionUnfolderKRSSSyntax implements IConceptUnfolder {
                 continue;
             }
 
+            if (isPreviousReadingAll) { 
+                beginIndex += subConcept.length() + 1;
+                isPreviousReadingAll = false;
+                continue;
+            }
+
             if (subConcept.equals("and")) {
                 beginIndex += LENGTH_AND + 1;
                 continue;
             } else if (subConcept.equals("some")) {
                 isPreviousReadingSome = true;
                 beginIndex += LENGTH_SOME + 1;
+                continue;
+            } else if (subConcept.equals("all")) { 
+                isPreviousReadingAll = true;
+                beginIndex += LENGTH_ALL + 1;
+                continue;
+            } else if (subConcept.equals("not")) { 
+                beginIndex += LENGTH_NOT + 1;
                 continue;
             }
 
@@ -138,6 +155,11 @@ public class ConceptDefinitionUnfolderKRSSSyntax implements IConceptUnfolder {
 
         // Just return if it is the top concept.
         if (conceptName.equals(KRSSConstant.TOP_CONCEPT.getStr())) {
+            return conceptName;
+        }
+
+        // Just return if it is the bottom concept.
+        if (conceptName.equals(KRSSConstant.BOTTOM_CONCEPT.getStr())) {
             return conceptName;
         }
 
