@@ -13,6 +13,7 @@ public class HandlerContextImpl implements IChainOfResponsibilityContext {
 
     private Set<String> primitiveConceptSet = new HashSet<String>();
     private Map<String, Set<String>> edgePrimitiveConceptExistentialMap = new HashMap<String, Set<String>>();
+    private Map<String, Set<String>> edgePrimitiveConceptUniversalMap = new HashMap<String, Set<String>>();
 
     public Set<String> addToPrimitiveConceptSet(String concept) {
         this.primitiveConceptSet.add(concept);
@@ -32,11 +33,22 @@ public class HandlerContextImpl implements IChainOfResponsibilityContext {
         return this.edgePrimitiveConceptExistentialMap;
     }
 
+    public Map<String, Set<String>> addToEdgePrimitiveConceptUniversalMap(String role, String concept) {
+        Set<String> concepts = this.edgePrimitiveConceptUniversalMap.get(role);
+        if (concepts == null) {
+            concepts = new HashSet<String>();
+        }
+        concepts.add(concept);
+        this.edgePrimitiveConceptUniversalMap.put(role, concepts);
+        return this.edgePrimitiveConceptUniversalMap;
+    }
+
     public void clear() {
         this.conceptDescription = null;
         this.topLevelDescription = null;
         this.primitiveConceptSet.clear();
         this.edgePrimitiveConceptExistentialMap.clear();
+        this.edgePrimitiveConceptUniversalMap.clear();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -63,7 +75,12 @@ public class HandlerContextImpl implements IChainOfResponsibilityContext {
         return conceptDescription;
     }
 
+    public Map<String, Set<String>> getEdgePrimitiveConceptUniversalMap() {
+        return edgePrimitiveConceptUniversalMap;
+    }
+
     public void setConceptDescription(String conceptDescription) {
         this.conceptDescription = conceptDescription;
     }
+    
 }

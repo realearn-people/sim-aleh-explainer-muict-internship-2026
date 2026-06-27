@@ -18,15 +18,22 @@ import sim.explainer.library.framework.PreferenceProfile;
 import sim.explainer.library.framework.descriptiontree.Tree;
 import sim.explainer.library.framework.descriptiontree.TreeBuilder;
 import sim.explainer.library.framework.explainer.BacktraceTable;
+import sim.explainer.library.framework.reasoner.DynamicALEHSimPiReasonerImpl;
+import sim.explainer.library.framework.reasoner.DynamicALEHSimReasonerImpl;
 import sim.explainer.library.framework.reasoner.DynamicProgrammingSimPiReasonerImpl;
 import sim.explainer.library.framework.reasoner.DynamicProgrammingSimReasonerImpl;
 import sim.explainer.library.framework.reasoner.IReasoner;
+import sim.explainer.library.framework.reasoner.TopDownALEHSimPiReasonerImpl;
+import sim.explainer.library.framework.reasoner.TopDownALEHSimReasonerImpl;
 import sim.explainer.library.framework.reasoner.TopDownSimPiReasonerImpl;
 import sim.explainer.library.framework.reasoner.TopDownSimReasonerImpl;
 import sim.explainer.library.framework.unfolding.ConceptDefinitionUnfolderKRSSSyntax;
 import sim.explainer.library.framework.unfolding.ConceptDefinitionUnfolderManchesterSyntax;
 import sim.explainer.library.framework.unfolding.IConceptUnfolder;
 import sim.explainer.library.framework.unfolding.IRoleUnfolder;
+import sim.explainer.library.framework.unfolding.ISubRoleUnfolder;
+import sim.explainer.library.framework.unfolding.SubRoleUnfolderKRSSSyntax;
+import sim.explainer.library.framework.unfolding.SubRoleUnfolderManchesterSyntax;
 import sim.explainer.library.framework.unfolding.SuperRoleUnfolderKRSSSyntax;
 import sim.explainer.library.framework.unfolding.SuperRoleUnfolderManchesterSyntax;
 
@@ -39,6 +46,12 @@ public class SimilarityService {
     private IReasoner topDownSimPiReasonerImpl;
     private IReasoner dynamicProgrammingSimReasonerImpl;
     private IReasoner dynamicProgrammingSimPiReasonerImpl;
+    private IReasoner topDownALEHSimPiReasonerImpl; 
+    private IReasoner dynamicALEHSimPiReasonerImpl; 
+    private ISubRoleUnfolder subRoleUnfolderKRSSSyntax; 
+    private ISubRoleUnfolder subRoleUnfolderManchesterSyntax; 
+    private IReasoner topDownALEHSimReasonerImpl; 
+    private IReasoner dynamicALEHSimReasonerImpl; 
 
     private IConceptUnfolder conceptDefinitionUnfolderManchesterSyntax;
     private IConceptUnfolder conceptDefinitionUnfolderKRSSSyntax;
@@ -55,6 +68,12 @@ public class SimilarityService {
         this.conceptDefinitionUnfolderKRSSSyntax = new ConceptDefinitionUnfolderKRSSSyntax(krssServiceContext);
         this.superRoleUnfolderManchesterSyntax = new SuperRoleUnfolderManchesterSyntax(owlServiceContext);
         this.superRoleUnfolderKRSSSyntax = new SuperRoleUnfolderKRSSSyntax(krssServiceContext);
+        this.subRoleUnfolderKRSSSyntax = new SubRoleUnfolderKRSSSyntax(krssServiceContext);
+        this.subRoleUnfolderManchesterSyntax = new SubRoleUnfolderManchesterSyntax(owlServiceContext); 
+        this.topDownALEHSimPiReasonerImpl = new TopDownALEHSimPiReasonerImpl(preferenceProfile, superRoleUnfolderKRSSSyntax, subRoleUnfolderKRSSSyntax); 
+        this.dynamicALEHSimPiReasonerImpl = new DynamicALEHSimPiReasonerImpl(preferenceProfile, superRoleUnfolderKRSSSyntax, subRoleUnfolderKRSSSyntax); 
+        this.topDownALEHSimReasonerImpl = new TopDownALEHSimReasonerImpl(preferenceProfile, superRoleUnfolderManchesterSyntax, subRoleUnfolderManchesterSyntax); 
+        this.dynamicALEHSimReasonerImpl = new DynamicALEHSimReasonerImpl(preferenceProfile, superRoleUnfolderManchesterSyntax, subRoleUnfolderManchesterSyntax); 
 
         this.topDownSimReasonerImpl = new TopDownSimReasonerImpl(preferenceProfile);
         this.topDownSimPiReasonerImpl = new TopDownSimPiReasonerImpl(preferenceProfile);
@@ -99,6 +118,7 @@ public class SimilarityService {
 
         IConceptUnfolder conceptT;
         IRoleUnfolder roleUnfolderT;
+        ISubRoleUnfolder subRoleUnfolderT; 
         IReasoner reasonerT;
         BigDecimal result;
 
@@ -110,9 +130,11 @@ public class SimilarityService {
         if (conceptType == FileTypeConstant.KRSS_FILE) {
             conceptT = conceptDefinitionUnfolderKRSSSyntax;
             roleUnfolderT = superRoleUnfolderKRSSSyntax;
+            subRoleUnfolderT = subRoleUnfolderKRSSSyntax; 
         } else if (conceptType  == FileTypeConstant.OWL_FILE) {
             conceptT = conceptDefinitionUnfolderManchesterSyntax;
             roleUnfolderT = superRoleUnfolderManchesterSyntax;
+            subRoleUnfolderT = subRoleUnfolderManchesterSyntax; 
         } else {
             throw new JSimPiException("Unable measure with this file type.", ErrorCode.OWLSimService_IllegalArguments);
         }
@@ -125,8 +147,23 @@ public class SimilarityService {
             reasonerT = topDownSimReasonerImpl;
         } else if (measurementType == ImplementationMethod.TOPDOWN_SIMPI) {
             reasonerT = topDownSimPiReasonerImpl;
+        }  else if (measurementType == ImplementationMethod.TOPDOWN_ALEH_SIMPI) { 
+            reasonerT = topDownALEHSimPiReasonerImpl;
+        } else if (measurementType == ImplementationMethod.DYNAMIC_ALEH_SIMPI) { 
+            reasonerT = dynamicALEHSimPiReasonerImpl;
+        } else if (measurementType == ImplementationMethod.TOPDOWN_ALEH_SIM) {  // ADD THIS
+            reasonerT = topDownALEHSimReasonerImpl;
+        } else if (measurementType == ImplementationMethod.DYNAMIC_ALEH_SIM) {  // ADD THIS
+            reasonerT = dynamicALEHSimReasonerImpl;
         } else {
             throw new JSimPiException("Unable measure with this approach.", ErrorCode.OWLSimService_IllegalArguments);
+        }
+
+        if (reasonerT instanceof TopDownALEHSimPiReasonerImpl alehPiReasoner) {
+            alehPiReasoner.setSubRoleUnfoldingStrategy(subRoleUnfolderT);
+        }
+        if (reasonerT instanceof TopDownALEHSimReasonerImpl alehReasoner) {
+            alehReasoner.setSubRoleUnfoldingStrategy(subRoleUnfolderT);
         }
 
         Tree<Set<String>> tree1 = unfoldAndConstructTree(conceptT, conceptName1);

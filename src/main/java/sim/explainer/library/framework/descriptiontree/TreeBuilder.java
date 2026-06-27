@@ -36,50 +36,68 @@ public class TreeBuilder {
     // Private /////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private void constructSubTreeWithKrssSyntax(HandlerContextImpl context, Tree<Set<String>> tree, String edge, TreeNode<Set<String>> parentNode, String nestedPrimitiveStr, HashMap<String, String> mapper) {
+    private void constructSubTreeWithKrssSyntax(HandlerContextImpl context, Tree<Set<String>> tree, String edge, TreeNode<Set<String>> parentNode, String nestedPrimitiveStr, HashMap<String, String> mapper, String edgeType) {
 
         context.clear();
         context.setConceptDescription(nestedPrimitiveStr);
         krssHandlerChain.invoke(context);
 
         Set<String> primitivesTop = new HashSet<String>(context.getPrimitiveConceptSet());
-        Map<String, Set<String>> edgesTop = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptExistentialMap());
+        Map<String, Set<String>> existentialEdges = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptExistentialMap());
+        Map<String, Set<String>> universalEdges = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptUniversalMap());
 
         TreeNode<Set<String>> child = tree.addNode(
                 MyStringUtils.mapConcepts(nestedPrimitiveStr, mapper),
                 edge,
                 parentNode,
-                primitivesTop);
+                primitivesTop,
+                edgeType);
 
-        for (Map.Entry<String, Set<String>> entry : edgesTop.entrySet()) {
+        for (Map.Entry<String, Set<String>> entry : existentialEdges.entrySet()) {
 
             String nestedEdge = entry.getKey();
             for (String nestedConcept : entry.getValue()) {
-                constructSubTreeWithKrssSyntax(context, tree, nestedEdge, child, nestedConcept, mapper);
+                constructSubTreeWithKrssSyntax(context, tree, nestedEdge, child, nestedConcept, mapper, "EXISTENTIAL");
+            }
+        }
+        
+        for (Map.Entry<String, Set<String>> entry : universalEdges.entrySet()) {
+            String nestedEdge = entry.getKey();
+            for (String nestedConcept : entry.getValue()) {
+                constructSubTreeWithKrssSyntax(context, tree, nestedEdge, child, nestedConcept, mapper, "UNIVERSAL");
             }
         }
     }
 
-    private void constructSubTreeWithManchesterSyntax(HandlerContextImpl context, Tree<Set<String>> tree, String edge, TreeNode<Set<String>> parentNode, String nestedPrimitiveStr, HashMap<String, String> mapper) {
+    private void constructSubTreeWithManchesterSyntax(HandlerContextImpl context, Tree<Set<String>> tree, String edge, TreeNode<Set<String>> parentNode, String nestedPrimitiveStr, HashMap<String, String> mapper, String edgeType) {
 
         context.clear();
         context.setConceptDescription(nestedPrimitiveStr);
         manchesterHandlerChain.invoke(context);
 
         Set<String> primitivesTop = new HashSet<String>(context.getPrimitiveConceptSet());
-        Map<String, Set<String>> edgesTop = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptExistentialMap());
+        Map<String, Set<String>> existentialEdges = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptExistentialMap());
+        Map<String, Set<String>> universalEdges = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptUniversalMap());
 
         TreeNode<Set<String>> child = tree.addNode(
                 MyStringUtils.mapConcepts(nestedPrimitiveStr, mapper),
                 edge,
                 parentNode,
-                primitivesTop);
+                primitivesTop,
+                edgeType);
 
-        for (Map.Entry<String, Set<String>> entry : edgesTop.entrySet()) {
+        for (Map.Entry<String, Set<String>> entry : existentialEdges.entrySet()) {
 
             String nestedEdge = entry.getKey();
             for (String nestedConcept : entry.getValue()) {
-                constructSubTreeWithManchesterSyntax(context, tree, nestedEdge, child, nestedConcept, mapper);
+                constructSubTreeWithManchesterSyntax(context, tree, nestedEdge, child, nestedConcept, mapper, "EXISTENTIAL");
+            }
+        }
+
+        for (Map.Entry<String, Set<String>> entry : universalEdges.entrySet()) {
+            String nestedEdge = entry.getKey();
+            for (String nestedConcept : entry.getValue()) {
+                constructSubTreeWithManchesterSyntax(context, tree, nestedEdge, child, nestedConcept, mapper, "UNIVERSAL");
             }
         }
     }
@@ -100,18 +118,26 @@ public class TreeBuilder {
         krssHandlerChain.invoke(context);
 
         Set<String> primitivesTop = new HashSet<String>(context.getPrimitiveConceptSet());
-        Map<String, Set<String>> edgesTop = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptExistentialMap());
+        Map<String, Set<String>> existentialEdges = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptExistentialMap());
+        Map<String, Set<String>> universalEdges = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptUniversalMap());
 
         Tree<Set<String>> tree = new Tree<Set<String>>(MyStringUtils.generateTreeLabel(conceptName));
 
         // Initiate the root
         TreeNode<Set<String>> parent = tree.addNode(MyStringUtils.mapConcepts(conceptName, mapper), null, null, primitivesTop);
 
-        for (Map.Entry<String, Set<String>> entry : edgesTop.entrySet()) {
+        for (Map.Entry<String, Set<String>> entry : existentialEdges.entrySet()) {
 
             String edge = entry.getKey();
             for (String primitiveSet : entry.getValue()) {
-                constructSubTreeWithKrssSyntax(context, tree, edge, parent, primitiveSet, mapper);
+                constructSubTreeWithKrssSyntax(context, tree, edge, parent, primitiveSet, mapper, "EXISTENTIAL");
+            }
+        }
+
+        for (Map.Entry<String, Set<String>> entry : universalEdges.entrySet()) {
+            String edge = entry.getKey();
+            for (String primitiveSet : entry.getValue()) {
+                constructSubTreeWithKrssSyntax(context, tree, edge, parent, primitiveSet, mapper, "UNIVERSAL");
             }
         }
 
@@ -129,18 +155,26 @@ public class TreeBuilder {
         manchesterHandlerChain.invoke(context);
 
         Set<String> primitivesTop = new HashSet<String>(context.getPrimitiveConceptSet());
-        Map<String, Set<String>> edgesTop = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptExistentialMap());
+        Map<String, Set<String>> existentialEdges = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptExistentialMap());
+        Map<String, Set<String>> universalEdges = new HashMap<String, Set<String>>(context.getEdgePrimitiveConceptUniversalMap());
 
         Tree<Set<String>> tree = new Tree<Set<String>>(MyStringUtils.generateTreeLabel(conceptName));
 
         // Initiate the root
         TreeNode<Set<String>> parent = tree.addNode(MyStringUtils.mapConcepts(conceptName, mapper), null, null, primitivesTop);
 
-        for (Map.Entry<String, Set<String>> entry : edgesTop.entrySet()) {
+        for (Map.Entry<String, Set<String>> entry : existentialEdges.entrySet()) {
 
             String edge = entry.getKey();
             for (String primitiveSet : entry.getValue()) {
-                constructSubTreeWithManchesterSyntax(context, tree, edge, parent, primitiveSet, mapper);
+                constructSubTreeWithManchesterSyntax(context, tree, edge, parent, primitiveSet, mapper, "EXISTENTIAL");
+            }
+        }
+
+        for (Map.Entry<String, Set<String>> entry : universalEdges.entrySet()) {
+            String edge = entry.getKey();
+            for (String primitiveSet : entry.getValue()) {
+                constructSubTreeWithManchesterSyntax(context, tree, edge, parent, primitiveSet, mapper, "UNIVERSAL");
             }
         }
 

@@ -1,27 +1,5 @@
 package sim.explainer.library;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.json.JSONObject;
-import org.semanticweb.owlapi.util.ShortFormProvider;
-import org.semanticweb.owlapi.util.SimpleShortFormProvider;
-import sim.explainer.library.controller.KRSSSimilarityController;
-import sim.explainer.library.controller.OWLSimilarityController;
-import sim.explainer.library.enumeration.FileTypeConstant;
-import sim.explainer.library.enumeration.ReasoningDirectionConstant;
-import sim.explainer.library.enumeration.ImplementationMethod;
-import sim.explainer.library.exception.ErrorCode;
-import sim.explainer.library.exception.JSimPiException;
-import sim.explainer.library.framework.explainer.BacktraceTable;
-import sim.explainer.library.framework.KRSSServiceContext;
-import sim.explainer.library.framework.OWLServiceContext;
-import sim.explainer.library.framework.PreferenceProfile;
-import sim.explainer.library.service.ExplanationConverterService;
-import sim.explainer.library.service.ExplanationService;
-import sim.explainer.library.service.SimilarityService;
-import sim.explainer.library.service.ValidationService;
-import sim.explainer.library.util.utilstructure.SymmetricPair;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -29,8 +7,34 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.json.JSONObject;
+import org.semanticweb.owlapi.util.ShortFormProvider;
+import org.semanticweb.owlapi.util.SimpleShortFormProvider;
+
+import sim.explainer.library.controller.KRSSSimilarityController;
+import sim.explainer.library.controller.OWLSimilarityController;
+import sim.explainer.library.enumeration.FileTypeConstant;
+import sim.explainer.library.enumeration.ImplementationMethod;
+import sim.explainer.library.enumeration.ReasoningDirectionConstant;
+import sim.explainer.library.exception.ErrorCode;
+import sim.explainer.library.exception.JSimPiException;
+import sim.explainer.library.framework.KRSSServiceContext;
+import sim.explainer.library.framework.OWLServiceContext;
+import sim.explainer.library.framework.PreferenceProfile;
+import sim.explainer.library.framework.explainer.BacktraceTable;
+import sim.explainer.library.service.ExplanationConverterService;
+import sim.explainer.library.service.ExplanationService;
+import sim.explainer.library.service.SimilarityService;
+import sim.explainer.library.service.ValidationService;
+import sim.explainer.library.util.utilstructure.SymmetricPair;
 
 /**
  * The {@code SimExplainer} class is responsible for loading ontologies, processing preference profiles,
@@ -487,7 +491,7 @@ public class SimExplainer {
         return explanation;
     }
 
-    class Explanation {
+    public class Explanation {
         public BigDecimal similarity;
         public String forward;
         public String backward;

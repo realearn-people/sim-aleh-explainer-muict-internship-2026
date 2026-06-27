@@ -1,18 +1,19 @@
 package sim.explainer.library.util.syntaxanalyzer.manchester;
 
-import sim.explainer.library.exception.ErrorCode;
-import sim.explainer.library.exception.JSimPiException;
-import sim.explainer.library.util.syntaxanalyzer.ParserHandler;
-import sim.explainer.library.util.MyStringUtils;
-import sim.explainer.library.util.ParserUtils;
-import sim.explainer.library.util.syntaxanalyzer.ChainOfResponsibilityHandler;
-import sim.explainer.library.util.syntaxanalyzer.HandlerContextImpl;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import sim.explainer.library.exception.ErrorCode;
+import sim.explainer.library.exception.JSimPiException;
+import sim.explainer.library.util.MyStringUtils;
+import sim.explainer.library.util.ParserUtils;
+import sim.explainer.library.util.syntaxanalyzer.ChainOfResponsibilityHandler;
+import sim.explainer.library.util.syntaxanalyzer.HandlerContextImpl;
+import sim.explainer.library.util.syntaxanalyzer.ParserHandler;
 
 public class ManchesterTopLevelParserHandler extends ParserHandler {
 
@@ -20,6 +21,8 @@ public class ManchesterTopLevelParserHandler extends ParserHandler {
 
     private static final String PATTERN_NAME_SOME = PATTERN_NAME + StringUtils.SPACE + EXISTENTIAL_RESTRICTION_SYMBOL + StringUtils.SPACE;
     private static final String PATTERN_NAME_SOME_NAME = PATTERN_NAME_SOME + PATTERN_NAME;
+    private static final String PATTERN_NAME_ONLY = PATTERN_NAME + StringUtils.SPACE + UNIVERSAL_RESTRICTION_SYMBOL + StringUtils.SPACE; 
+    private static final String PATTERN_NAME_ONLY_NAME = PATTERN_NAME_ONLY + PATTERN_NAME; 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Protected ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,6 +104,19 @@ public class ManchesterTopLevelParserHandler extends ParserHandler {
 
                 }
             }
+            else if (StringUtils.contains(compactFormat, UNIVERSAL_RESTRICTION_SYMBOL)) {
+                String group = StringUtils.substring(compactFormat, beginParenthesis, lastParenthesis + 1);
+                String groupStr = StringUtils.replacePattern(group, "\\(", "\\\\(");
+                groupStr = StringUtils.replacePattern(groupStr, "\\)", "\\\\)");
+                String patternStr = PATTERN_NAME_ONLY + groupStr;
+                Pattern pattern = Pattern.compile(patternStr);
+                Matcher matcher = pattern.matcher(compactFormat);
+                if (matcher.find()) {
+                    String role = storeRoleAndNestedUniversalConceptPair(context, matcher.group());
+                    String roleForm = ParserUtils.convertToRoleForm(role);
+                    return compactFormat.replaceFirst(patternStr, roleForm);
+                }
+            } 
 
             // Otherwise, it is in a form of "(primitive and primitive)"
             else {
@@ -142,6 +158,24 @@ public class ManchesterTopLevelParserHandler extends ParserHandler {
                 throw new JSimPiException("Unable to return top level concept string if available as compactFormat has incorrect syntax.", ErrorCode.ManchesterTopLevelParserHandler_InvalidSyntaxException);
             }
         }
+        
+        // Check if compactFormat is in a form of "concept and role only concept"
+        else if (StringUtils.contains(compactFormat, UNIVERSAL_RESTRICTION_SYMBOL)) {
+                Pattern pattern = Pattern.compile(PATTERN_NAME_ONLY_NAME);
+                Matcher matcher = pattern.matcher(compactFormat);
+
+                // If so,
+                if (matcher.find()) {
+                    String role = storeRoleAndNestedUniversalConceptPair(context, matcher.group());
+                    String roleForm = ParserUtils.convertToRoleForm(role);
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("6. compactFormat is already in a form of \"concept and role only concept\".");
+                    }
+
+                    return compactFormat.replaceFirst(PATTERN_NAME_ONLY_NAME, roleForm);
+                }
+        } 
 
         if (logger.isDebugEnabled()) {
             logger.debug("NULL case: compactFormat is already top level concept string.");
@@ -149,6 +183,7 @@ public class ManchesterTopLevelParserHandler extends ParserHandler {
 
         return null;
     }
+    
 
     protected String storeRoleAndNestedConceptPair(HandlerContextImpl context, String str) {
         if (context == null || str == null) {
@@ -185,6 +220,34 @@ public class ManchesterTopLevelParserHandler extends ParserHandler {
 
         return role;
     }
+
+    protected String storeRoleAndNestedUniversalConceptPair(HandlerContextImpl context, String str) {
+        if (context == null || str == null) {
+            throw new JSimPiException("Unable to store role and nested universal concept pair as context[" + context + "] and str[" + str + "] are null.", ErrorCode.ManchesterTopLevelParserHandler_IllegalArguments);
+        }
+
+        String role = null;
+        if (StringUtils.contains(str, UNIVERSAL_RESTRICTION_SYMBOL)) {
+            Pattern pattern = Pattern.compile("^" + PATTERN_NAME);
+            Matcher matcher = pattern.matcher(str);
+            if (matcher.find()) {
+                role = matcher.group();
+            }
+            else {
+                throw new JSimPiException("Unable to match pattern[" + pattern.toString() + "].", ErrorCode.ManchesterTopLevelParserHandler_InvalidSyntaxException);
+            }
+            StringBuilder builder = new StringBuilder(role);
+            builder.append(StringUtils.SPACE);
+            builder.append(UNIVERSAL_RESTRICTION_SYMBOL);
+            builder.append(StringUtils.SPACE);
+            String nestedConcept = StringUtils.trim(StringUtils.replaceOnce(str, builder.toString(), StringUtils.EMPTY));
+            if (nestedConcept.charAt(0) == '(' && nestedConcept.charAt(nestedConcept.length() - 1) == ')') {
+                nestedConcept = MyStringUtils.removeCharactersFrom(nestedConcept, 0, nestedConcept.length() - 2);
+            }
+            context.addToEdgePrimitiveConceptUniversalMap(role, nestedConcept);
+        }
+        return role;
+    } 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Public //////////////////////////////////////////////////////////////////////////////////////////////////////////

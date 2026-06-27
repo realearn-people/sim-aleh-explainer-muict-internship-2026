@@ -1,26 +1,33 @@
 package sim.explainer.library.framework.reasoner;
 
-import com.google.common.collect.Sets;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+import javax.annotation.Resource;
+
 import org.apache.commons.lang3.text.StrBuilder;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
+import com.google.common.collect.Sets;
+
 import sim.explainer.library.exception.ErrorCode;
 import sim.explainer.library.exception.JSimPiException;
-import sim.explainer.library.framework.explainer.BacktraceTable;
+import sim.explainer.library.framework.PreferenceProfile;
 import sim.explainer.library.framework.descriptiontree.Tree;
 import sim.explainer.library.framework.descriptiontree.TreeNode;
+import sim.explainer.library.framework.explainer.BacktraceTable;
 import sim.explainer.library.framework.explainer.SimRecord;
 import sim.explainer.library.framework.unfolding.IRoleUnfolder;
-import sim.explainer.library.framework.PreferenceProfile;
 import sim.explainer.library.util.MyStringUtils;
 import sim.explainer.library.util.TimeUtils;
 import sim.explainer.library.util.utilstructure.SymmetricPair;
-
-import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.util.*;
 
 @Component("topDownSimReasonerImpl")
 public class TopDownSimReasonerImpl implements IReasoner {

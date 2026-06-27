@@ -1,18 +1,19 @@
 package sim.explainer.library.framework.unfolding;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
 import sim.explainer.library.enumeration.OWLConstant;
 import sim.explainer.library.exception.ErrorCode;
 import sim.explainer.library.exception.JSimPiException;
 import sim.explainer.library.framework.OWLServiceContext;
 import sim.explainer.library.util.OWLConceptDefinitionUtil;
 import sim.explainer.library.util.ParserUtils;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Component("conceptDefinitionUnfolderManchesterSyntax")
 public class ConceptDefinitionUnfolderManchesterSyntax implements IConceptUnfolder {
@@ -84,6 +85,11 @@ public class ConceptDefinitionUnfolderManchesterSyntax implements IConceptUnfold
                 logger.debug("Current subConceptDefinition of " + subConcept + " is " + subConceptDefinition);
             }
 
+            if (subConcept.equals("not") || subConcept.equals("only") || subConcept.equals("and") || subConcept.equals("some")) {
+                beginIndex += subConcept.length() + 1;
+                continue;
+            }
+
             if(subConceptDefinition != null) {
                 String beforeSubConceptIncludingSelf = StringUtils.substring(conceptName, 0, beginIndex);
                 String afterSubConceptIncludingSelf = StringUtils.substring(conceptName, beginIndex, conceptName.length());
@@ -125,6 +131,11 @@ public class ConceptDefinitionUnfolderManchesterSyntax implements IConceptUnfold
 
         // Just return if it is the top concept.
         if (conceptName.equals(OWLConstant.TOP_CONCEPT_1.getOwlSyntax()) || conceptName.equals(OWLConstant.TOP_CONCEPT_2.getOwlSyntax())) {
+            return conceptName;
+        }
+
+        // Just return if it is the bottom concept.
+        if (conceptName.equals(OWLConstant.BOTTOM_CONCEPT_1.getOwlSyntax()) || conceptName.equals(OWLConstant.BOTTOM_CONCEPT_2.getOwlSyntax()) || conceptName.equals(OWLConstant.BOTTOM_CONCEPT_3.getOwlSyntax())) {
             return conceptName;
         }
 

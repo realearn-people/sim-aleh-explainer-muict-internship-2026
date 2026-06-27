@@ -2,7 +2,9 @@ package sim.explainer.library.enumeration;
 
 public enum KRSSConstant {
     TOP_CONCEPT("TOP"),
-    TOP_ROLE("top");
+    TOP_ROLE("top"),
+    BOTTOM_CONCEPT("BOTTOM"),
+    BOTTOM_ROLE("bottom");
 
     private final String str;
 

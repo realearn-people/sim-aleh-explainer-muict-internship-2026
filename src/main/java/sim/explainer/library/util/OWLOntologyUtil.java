@@ -1,18 +1,25 @@
 package sim.explainer.library.util;
 
-import org.apache.commons.lang3.StringUtils;
-import sim.explainer.library.enumeration.OWLDocumentFormat;
-import sim.explainer.library.exception.ErrorCode;
-import sim.explainer.library.exception.JSimPiException;
+import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.coode.owlapi.manchesterowlsyntax.ManchesterOWLSyntaxOntologyFormat;
 import org.semanticweb.owlapi.io.OWLObjectRenderer;
 import org.semanticweb.owlapi.io.SystemOutDocumentTarget;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyFormat;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.util.DLExpressivityChecker;
-import uk.ac.manchester.cs.owl.owlapi.mansyntaxrenderer.ManchesterOWLSyntaxOWLObjectRendererImpl;
 
-import java.util.Set;
+import sim.explainer.library.enumeration.OWLDocumentFormat;
+import sim.explainer.library.exception.ErrorCode;
+import sim.explainer.library.exception.JSimPiException;
+import uk.ac.manchester.cs.owl.owlapi.mansyntaxrenderer.ManchesterOWLSyntaxOWLObjectRendererImpl;
 
 public class OWLOntologyUtil {
 
@@ -146,17 +153,31 @@ public class OWLOntologyUtil {
 
         Set<OWLClassExpression> subsumeClasses = owlClass.getSuperClasses(owlOntology);
 
-        if (subsumeClasses.size() > 1) {
-            throw new JSimPiException(owlClass.toString() + " has more than one definition.", ErrorCode.OWLOntologyUtil_NotUniqueDefinition);
+        if (subsumeClasses.isEmpty()) {
+            return null;
         }
 
-        String definition = null;
+        // In ALEH, multiple subClassOf axioms are treated as conjunction (AND)
+        if (subsumeClasses.size() == 1) {
+            OWLClassExpression single = subsumeClasses.iterator().next();
+            String rendered = StringUtils.replacePattern(renderer.render(single), "\\s+", StringUtils.SPACE);
+            rendered = rendered.replaceAll("not \\(([A-Za-z0-9_]+)\\)", "not $1");
+            return rendered;
+        }
 
+        // Combine multiple subClassOf into a conjunction string: A and B and C
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
         for (OWLClassExpression classExpression : subsumeClasses) {
-            definition = StringUtils.replacePattern(renderer.render(classExpression), "\\s+", StringUtils.SPACE);
+            if (!first) sb.append(" and ");
+            String rendered = renderer.render(classExpression);
+            // Strip unnecessary parentheses around single concept names: not (X) -> not X
+            rendered = rendered.replaceAll("not \\(([A-Za-z0-9_]+)\\)", "not $1");
+            sb.append(rendered);
+            first = false;
         }
 
-        return definition;
+        return StringUtils.replacePattern(sb.toString(), "\\s+", StringUtils.SPACE);
     }
 
     public static OWLClass getOWLClass(OWLDataFactory owlDataFactory, OWLOntologyManager owlOntologyManager, OWLOntology owlOntology, String abbreviatedConceptName) {

@@ -84,6 +84,24 @@ public class Tree<T> {
         }
 
         this.nodes.put(node.getId(), node);
+        return node;
+    }
+
+    public TreeNode<T> addNode(String conceptName, String edge, TreeNode<T> parentNode, T childNodeData, String edgeType) {
+        TreeNode<T> node;
+
+        // If it is not the root
+        if (edge != null && parentNode != null) {
+            this.runningNodeId++;
+            node = parentNode.addChild(conceptName, edge, childNodeData, runningNodeId,  edgeType);
+        }
+
+        // Otherwise,
+        else {
+            node = new TreeNode<T>(conceptName, edge, childNodeData, runningNodeId, edgeType);
+        }
+
+        this.nodes.put(node.getId(), node);
 
 
 

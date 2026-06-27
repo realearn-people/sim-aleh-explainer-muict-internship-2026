@@ -4,8 +4,12 @@ public enum OWLConstant {
     TOP_CONCEPT_1("Top1", "Top", "[owl:Thing]"),
     TOP_CONCEPT_2("Top2", "Top", "Thing"),
     TOP_CONCEPT_3("Top3", "Top", "owl:Thing"),
-    TOP_ROLE("", "", "[owl:topObjectProperty]");
-
+    TOP_ROLE("", "", "[owl:topObjectProperty]"),
+    BOTTOM_CONCEPT_1("Bottom1", "Bottom", "[owl:Nothing]"),
+    BOTTOM_CONCEPT_2("Bottom2", "Bottom", "Nothing"),
+    BOTTOM_CONCEPT_3("Bottom3", "Bottom", "owl:Nothing"),
+    BOTTOM_ROLE("bottom", "Bottom", "[owl:bottomObjectProperty]");
+// another 2 version of bottom concepts not implemented currently.
     private final String str;
     private final String descriptionLogicSyntax;
     private final String owlSyntax;
